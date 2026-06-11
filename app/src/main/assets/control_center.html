@@ -1,0 +1,1986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LM ELITE CONTROL CENTER</title>
+    <!-- Google Fonts for Futuristic Look -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --neon-red: #ff003c;
+            --neon-glow: 0 0 15px rgba(255, 0, 60, 0.45);
+            --neon-glow-strong: 0 0 25px rgba(255, 0, 60, 0.85), 0 0 50px rgba(255, 0, 60, 0.35);
+            --gold-accent: #f39c12;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-hover: rgba(255, 255, 255, 0.15);
+            --font-display: 'Orbitron', sans-serif;
+            --font-sub: 'Rajdhani', sans-serif;
+            --edge-glow: var(--neon-red);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: #ffffff;
+            font-family: var(--font-sub);
+            overflow-x: hidden;
+            overflow-y: scroll;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Ambient Fog Canvas Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Screen Vibration Class */
+        .vibrate {
+            animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+            40%, 60% { transform: translate3d(3px, 0, 0); }
+        }
+
+        /* Outer Curved Phone Mockup Container */
+        .phone-container {
+            width: 100%;
+            max-width: 480px;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #0F0205 0%, #050505 100%);
+            border-left: 1px solid rgba(255, 255, 255, 0.05);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            box-shadow: 0 0 80px rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            padding-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 1;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Adaptive Edge Lighting */
+        .edge-lighting-pulse {
+            box-shadow: inset 0 0 15px var(--edge-glow), 0 0 15px var(--edge-glow);
+            transition: box-shadow 0.5s ease;
+        }
+
+        /* Branding and Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 12px 6px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .branding {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .branding h1 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
+        }
+
+        .branding span {
+            font-size: 0.65rem;
+            color: var(--neon-red);
+            font-weight: bold;
+            letter-spacing: 3px;
+        }
+
+        .status-indicators {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .signal-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+        }
+
+        .bar {
+            width: 3px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 1px;
+        }
+
+        .bar.active {
+            background: var(--neon-red);
+            box-shadow: 0 0 4px var(--neon-red);
+        }
+
+        .bar-1 { height: 3px; }
+        .bar-2 { height: 6px; }
+        .bar-3 { height: 9px; }
+        .bar-4 { height: 12px; }
+
+        .battery-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .battery-icon {
+            width: 22px;
+            height: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 2px;
+            position: relative;
+            padding: 1px;
+        }
+
+        .battery-level {
+            height: 100%;
+            background: var(--neon-red);
+            width: 85%;
+            box-shadow: 0 0 4px var(--neon-red);
+            transition: width 0.5s ease;
+        }
+
+        .battery-icon::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            top: 2px;
+            width: 2px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 0 1px 1px 0;
+        }
+
+        /* Large Chrono Section */
+        .chrono-card {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 8px 6px 16px 6px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .digital-clock {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 200;
+            letter-spacing: -2px;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 0;
+        }
+
+        .current-date {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--neon-red);
+            text-align: right;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(255, 0, 60, 0.35);
+        }
+
+        /* Large Ambient Showcase Viewport at Top */
+        .showcase-container {
+            background: radial-gradient(circle at center, rgba(139, 0, 60, 0.15) 0%, rgba(5, 5, 5, 0.85) 75%, #050505 100%);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            height: 230px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(255, 0, 0, 0.15), 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        #showcase-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #showcase-canvas:active {
+            cursor: grabbing;
+        }
+
+        .showcase-label {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(5, 5, 5, 0.9);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 4px 14px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            pointer-events: none;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        /* Brightness & Vol Lux Slider Section */
+        .brightness-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(12px);
+        }
+
+        .slider-wrapper {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-family: var(--font-display);
+        }
+
+        .slider-container {
+            position: relative;
+            width: 100%;
+            height: 32px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .slider-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1d0006 0%, var(--neon-red) 100%);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.4);
+            border-radius: 12px;
+            transition: width 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 8px;
+        }
+
+        .slider-fill::after {
+            content: '';
+            width: 4px;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.45);
+            border-radius: 2px;
+        }
+
+        .percentage-indicator {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: bold;
+            background: rgba(10, 10, 10, 0.95);
+        }
+
+        /* Grid Layouts for Control Buttons */
+        .section-header {
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            letter-spacing: 2px;
+            color: var(--neon-red);
+            text-shadow: 0 0 5px rgba(255,0,60,0.5);
+            text-transform: uppercase;
+            margin-top: 8px;
+            padding-left: 4px;
+            border-left: 2px solid var(--neon-red);
+        }
+
+        .toggles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        /* Glassmorphic Neumorphic Dashboard Card */
+        .toggle-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            transform-style: preserve-3d;
+            perspective: 500px;
+            transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .toggle-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--glass-border-hover);
+        }
+
+        .toggle-card.active {
+            border-color: rgba(255, 0, 60, 0.38);
+            background: radial-gradient(circle at top right, rgba(255, 0, 60, 0.15) 0%, rgba(15, 5, 5, 0.8) 100%);
+            box-shadow: 0 0 20px rgba(255, 0, 60, 0.25), inset 0 0 15px rgba(255, 0, 60, 0.15);
+        }
+
+        /* 3D Canvas Box inside Toggles */
+        .canvas3d-container {
+            width: 100%;
+            height: 100px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            background: rgba(0,0,0,0.45);
+        }
+
+        .canvas3d-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .card-info {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 0 8px;
+        }
+
+        .card-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .card-title {
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card-status {
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        .toggle-card.active .card-status {
+            color: var(--neon-red);
+            text-shadow: 0 0 5px var(--neon-red);
+            font-weight: bold;
+        }
+
+        .switch-btn {
+            width: 32px;
+            height: 18px;
+            border-radius: 9px;
+            background: rgba(255,255,255,0.1);
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: background-color 0.3s;
+        }
+
+        .toggle-card.active .switch-btn {
+            background: var(--neon-red);
+            box-shadow: 0 0 10px var(--neon-red);
+            border-color: transparent;
+        }
+
+        .switch-puck {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            position: absolute;
+            top: 1px;
+            left: 2px;
+            transition: transform 0.3s cubic-bezier(0.2,0.8,0.2,1.2);
+        }
+
+        .toggle-card.active .switch-puck {
+            transform: translateX(12px);
+        }
+
+        /* Generic System Action Section */
+        .system-ops {
+            grid-template-columns: repeat(3, 1fr) !important;
+        }
+
+        .opt-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 18px;
+            padding: 14px 6px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .opt-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--glass-border-hover);
+        }
+
+        .opt-card:active {
+            transform: scale(0.92);
+        }
+
+        .opt-card.active {
+            border-color: var(--neon-red);
+            background: radial-gradient(circle at center, rgba(255,0,60,0.15) 0%, rgba(255,255,255,0.02) 100%);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.25);
+        }
+
+        .opt-icon {
+            font-size: 1.3rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .opt-card.active .opt-icon {
+            color: var(--neon-red);
+            text-shadow: 0 0 10px var(--neon-red);
+        }
+
+        .opt-title {
+            font-size: 0.72rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Personalization: Swiper or Carousel for Themes */
+        .theme-carousel {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: none;
+        }
+
+        .themes-wrapper {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--neon-red) transparent;
+        }
+
+        .themes-wrapper::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .themes-wrapper::-webkit-scrollbar-thumb {
+            background: var(--neon-red);
+            border-radius: 2px;
+        }
+
+        .theme-item {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 8px 16px;
+            font-size: 0.78rem;
+            font-weight: bold;
+            font-family: var(--font-display);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .theme-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .theme-item.active {
+            border-color: var(--neon-red);
+            background: radial-gradient(circle at center, rgba(255, 0, 60, 0.2) 0%, rgba(255, 0, 60, 0.05) 100%);
+            box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+            color: #fff;
+        }
+
+        /* Performance Gauges Section */
+        .perf-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+        }
+
+        .perf-gauge-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .perf-gauge-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--glass-border-hover);
+        }
+
+        .perf-gauge-card:active {
+            transform: scale(0.96);
+        }
+
+        .booster-dial {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: conic-gradient(var(--neon-red) 0%, var(--neon-red) 72%, rgba(255,255,255,0.05) 72%, rgba(255,255,255,0.05) 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 0 15px rgba(255,0,60,0.25);
+        }
+
+        .booster-dial::after {
+            content: '';
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: #050505;
+            border-radius: 50%;
+            z-index: 1;
+        }
+
+        .dial-label {
+            position: relative;
+            z-index: 2;
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .perf-texts {
+            text-align: center;
+        }
+
+        .perf-title {
+            font-family: var(--font-display);
+            font-size: 0.78rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .perf-status {
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 2px;
+        }
+
+        /* Particle Explosion Layer on Click */
+        .emitter-burst {
+            position: absolute;
+            pointer-events: none;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--neon-red);
+            box-shadow: var(--neon-glow-strong);
+            z-index: 99;
+        }
+
+        /* Edge effect customization styles */
+        .custom-edge-pulse-fast {
+            animation: edgePulseFast 1s infinite alternate;
+        }
+
+        .custom-edge-pulse-slow {
+            animation: edgePulseSlow 3s infinite alternate;
+        }
+
+        @keyframes edgePulseFast {
+            0% { box-shadow: inset 0 0 10px var(--edge-glow), 0 0 10px var(--edge-glow); }
+            100% { box-shadow: inset 0 0 25px var(--edge-glow), 0 0 25px var(--edge-glow); }
+        }
+
+        @keyframes edgePulseSlow {
+            0% { box-shadow: inset 0 0 5px var(--edge-glow), 0 0 5px var(--edge-glow); }
+            100% { box-shadow: inset 0 0 15px var(--edge-glow), 0 0 15px var(--edge-glow); }
+        }
+
+        /* Advanced feature section */
+        .adv-features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .adv-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 18px;
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .adv-row:active {
+            transform: scale(0.98);
+        }
+
+        .adv-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .adv-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .adv-icon {
+            color: var(--neon-red);
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px var(--neon-red);
+            width: 20px;
+            text-align: center;
+        }
+
+        .adv-title {
+            font-weight: bold;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .adv-right {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.4);
+        }
+
+        /* Wave options */
+        .edge-opt-container {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+        }
+
+        .edge-btn {
+            flex-grow: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 8px;
+            font-size: 0.65rem;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .edge-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        .edge-btn.active {
+            border-color: var(--neon-red);
+            color: var(--neon-red);
+            box-shadow: 0 0 8px rgba(255, 0, 60, 0.3);
+            background: radial-gradient(circle at center, rgba(255, 0, 60, 0.15) 0%, transparent 100%);
+        }
+
+        /* Success dialog styling */
+        .elite-msg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(5,5,5,0.95);
+            border: 2px solid var(--neon-red);
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            color: #fff;
+            text-shadow: 0 0 4px var(--neon-red);
+            z-index: 1000;
+            box-shadow: var(--neon-glow-strong);
+            transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .elite-msg.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Style customization widgets */
+        .styled-indicator-bar {
+            width: 100%;
+            height: 4px;
+            background: var(--neon-red);
+            box-shadow: 0 0 8px var(--neon-red);
+            margin-top: 10px;
+            border-radius: 2px;
+            animation: pulse-glow-line 1.5s infinite alternate;
+        }
+
+        @keyframes pulse-glow-line {
+            0% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="edge-lighting-pulse custom-edge-pulse-slow">
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Custom Success Dialog Message -->
+    <div id="toast-message" class="elite-msg">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span id="toast-text">SYSTEM INITIATION ACTIVE</span>
+    </div>
+
+    <div class="phone-container">
+        <!-- TOP BRANDING & COCKPIT CONTROLS -->
+        <div class="top-bar">
+            <div class="branding">
+                <h1>LM ELITE</h1>
+                <span>Control Center</span>
+            </div>
+            <div class="status-indicators">
+                <i class="fa-solid fa-wifi" id="top-wifi-icon" style="color: rgba(255,255,255,0.4);"></i>
+                <i class="fa-solid fa-bluetooth-b" id="top-bt-icon" style="color: rgba(255,255,255,0.4);"></i>
+                <div class="signal-bars">
+                    <div class="bar bar-1 active"></div>
+                    <div class="bar bar-2 active"></div>
+                    <div class="bar bar-3 active"></div>
+                    <div class="bar bar-4 active"></div>
+                </div>
+                <div class="battery-box">
+                    <span id="top-battery-text" style="font-size: 0.75rem; font-weight: bold;">85%</span>
+                    <div class="battery-icon">
+                        <div class="battery-level" id="top-battery-fill"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLOCK & UTILITIES -->
+        <div class="chrono-card">
+            <div class="digital-clock" id="clock-txt">00:00:00</div>
+            <div class="current-date" id="date-txt">THURSDAY, 11 JUNE 2026</div>
+            <div class="styled-indicator-bar"></div>
+        </div>
+
+        <!-- CORE CHASSIS & ROTATING COMPANION Showcase -->
+        <div class="showcase-container">
+            <canvas id="showcase-canvas"></canvas>
+            <div class="showcase-label" id="showcase-descriptor">ELITE MODEL: DRAGON HEAD</div>
+        </div>
+
+        <!-- LUXURY LUX BRIGHTNESS CONTROL -->
+        <div class="brightness-section">
+            <div class="slider-wrapper">
+                <div class="slider-label">
+                    <span>Brightness & Core Lux</span>
+                    <span id="brightness-text">70%</span>
+                </div>
+                <div class="slider-container" id="brightness-slider">
+                    <div class="slider-fill" id="brightness-fill" style="width: 70%;"></div>
+                </div>
+            </div>
+            <div class="percentage-indicator" id="percentage-indicator">70</div>
+        </div>
+
+        <!-- SYSTEM CONNECTIVITY SECTION (3D GRAPHICS INTERACTION) -->
+        <div class="section-header">System & Connectivity</div>
+        <div class="toggles-grid">
+            <!-- WIFI toggle card -->
+            <div class="toggle-card" id="wi-fi-card" onclick="toggleOption('wi-fi')">
+                <div class="canvas3d-container" id="wifi-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Wi-Fi</span>
+                        <span class="card-status" id="wi-fi-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BLUETOOTH toggle card -->
+            <div class="toggle-card" id="bluetooth-card" onclick="toggleOption('bluetooth')">
+                <div class="canvas3d-container" id="bluetooth-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Bluetooth</span>
+                        <span class="card-status" id="bluetooth-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MOBILE DATA toggle card -->
+            <div class="toggle-card" id="mobile-data-card" onclick="toggleOption('mobile-data')">
+                <div class="canvas3d-container" id="mobile-data-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Mobile Data</span>
+                        <span class="card-status" id="mobile-data-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HOTSPOT toggle card -->
+            <div class="toggle-card" id="hotspot-card" onclick="toggleOption('hotspot')">
+                <div class="canvas3d-container" id="hotspot-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Hotspot</span>
+                        <span class="card-status" id="hotspot-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FLASHLIGHT toggle card -->
+            <div class="toggle-card" id="flashlight-card" onclick="toggleOption('flashlight')">
+                <div class="canvas3d-container" id="flashlight-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Flashlight</span>
+                        <span class="card-status" id="flashlight-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BATTERY SAVER toggle card -->
+            <div class="toggle-card" id="battery-saver-card" onclick="toggleOption('battery-saver')">
+                <div class="canvas3d-container" id="battery-saver-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Power Saver</span>
+                        <span class="card-status" id="battery-saver-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LOCATION toggle card -->
+            <div class="toggle-card" id="location-card" onclick="toggleOption('location')">
+                <div class="canvas3d-container" id="location-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Location</span>
+                        <span class="card-status" id="location-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DARK MODE toggle card -->
+            <div class="toggle-card" id="dark-mode-card" onclick="toggleOption('dark-mode')">
+                <div class="canvas3d-container" id="dark-mode-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">Dark Mode</span>
+                        <span class="card-status" id="dark-mode-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VPN toggle card -->
+            <div class="toggle-card" id="vpn-card" onclick="toggleOption('vpn')">
+                <div class="canvas3d-container" id="vpn-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">VPN Guard</span>
+                        <span class="card-status" id="vpn-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NFC toggle card -->
+            <div class="toggle-card" id="nfc-card" onclick="toggleOption('nfc')">
+                <div class="canvas3d-container" id="nfc-container"></div>
+                <div class="card-info">
+                    <div class="card-details">
+                        <span class="card-title">NFC Token</span>
+                        <span class="card-status" id="nfc-status-label">OFFLINE</span>
+                    </div>
+                    <div class="switch-btn">
+                        <div class="switch-puck"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK SYSTEMS SETTINGS -->
+        <div class="toggles-grid system-ops">
+            <div class="opt-card" id="airplane-card" onclick="toggleOption('airplane')">
+                <i class="fa-solid fa-plane opt-icon"></i>
+                <span class="opt-title">Airplane</span>
+            </div>
+            <div class="opt-card" id="screencast-card" onclick="toggleOption('screencast')">
+                <i class="fa-solid fa-tv opt-icon"></i>
+                <span class="opt-title">Screencast</span>
+            </div>
+            <div class="opt-card" id="mute-card" onclick="toggleOption('mute')">
+                <i class="fa-solid fa-volume-xmark opt-icon"></i>
+                <span class="opt-title font-sub">Mute Ops</span>
+            </div>
+        </div>
+
+        <!-- COMPANION ART & THEMES SECTION -->
+        <div class="section-header">Elite Hologram Themes</div>
+        <div class="theme-carousel">
+            <div class="themes-wrapper">
+                <div class="theme-item active" onclick="selectTheme('Dragon Head')">Dragon Head</div>
+                <div class="theme-item" onclick="selectTheme('Raven')">Raven</div>
+                <div class="theme-item" onclick="selectTheme('Wolf')">Wolf</div>
+                <div class="theme-item" onclick="selectTheme('Cobra')">Cobra</div>
+                <div class="theme-item" onclick="selectTheme('Scorpion')">Scorpion</div>
+                <div class="theme-item" onclick="selectTheme('Phantom Mask')">Phantom Mask</div>
+                <div class="theme-item" onclick="selectTheme('Dark Crown')">Dark Crown</div>
+                <div class="theme-item" onclick="selectTheme('Fire Crystal')">Fire Crystal</div>
+                <div class="theme-item" onclick="selectTheme('Lava Orb')">Lava Orb</div>
+                <div class="theme-item" onclick="selectTheme('Mechanical Gear')">Mech Gear</div>
+                <div class="theme-item" onclick="selectTheme('Energy Sphere')">Energy Sphere</div>
+                <div class="theme-item" onclick="selectTheme('Dark Moon')">Dark Moon</div>
+                <div class="theme-item" onclick="selectTheme('Cyber Eye')">Cyber Eye</div>
+                <div class="theme-item" onclick="selectTheme('Titan Helmet')">Titan Helmet</div>
+                <div class="theme-item" onclick="selectTheme('Ancient Relic')">Ancient Relic</div>
+                <div class="theme-item" onclick="selectTheme('Mystic Crystal')">Mystic Crystal</div>
+                <div class="theme-item" onclick="selectTheme('Shadow Portal')">Shadow Portal</div>
+                <div class="theme-item" onclick="selectTheme('Ice Core')">Ice Core</div>
+                <div class="theme-item" onclick="selectTheme('Plasma Reactor')">Plasma Rx</div>
+                <div class="theme-item" onclick="selectTheme('Cyber Brain')">Cyber Brain</div>
+            </div>
+        </div>
+
+        <!-- EDGE LIGHTING AND COLOR PERSONALIZATION -->
+        <div class="section-header font-display" style="font-size: 0.8rem;">Edge Glow Aura</div>
+        <div class="theme-carousel">
+            <div class="edge-opt-container">
+                <div class="edge-btn active" onclick="setEdgeGlow('#ff003c', this)">Deep Crimson</div>
+                <div class="edge-btn" onclick="setEdgeGlow('#00ffcc', this)">Neon Cyan</div>
+                <div class="edge-btn" onclick="setEdgeGlow('#ffbf00', this)">Gold Amber</div>
+                <div class="edge-btn" onclick="setEdgeGlow('#aa00ff', this)">Cyber Violet</div>
+            </div>
+            <div class="edge-opt-container" style="margin-top: 4px;">
+                <div class="edge-btn active" onclick="setEdgePulse('slow', this)">Glow Slow</div>
+                <div class="edge-btn" onclick="setEdgePulse('fast', this)">Glow Rapid</div>
+                <div class="edge-btn" onclick="setEdgePulse('steady', this)">Steady Aura</div>
+            </div>
+        </div>
+
+        <!-- PERFORMANCE TURBO BENCHMARK -->
+        <div class="section-header">Performance Booster</div>
+        <div class="performance-grid">
+            <div class="perf-gauge-card" onclick="boostRam()">
+                <div class="booster-dial" id="ram-dial">
+                    <span class="dial-label" id="ram-percent">64%</span>
+                </div>
+                <div class="perf-texts">
+                    <span class="perf-title">Memory Allocation</span>
+                    <div class="perf-status">Tap to Optimize RAM</div>
+                </div>
+            </div>
+
+            <div class="perf-gauge-card" onclick="toggleTurbo()">
+                <div class="booster-dial" id="turbo-dial" style="background: conic-gradient(rgba(255,255,255,0.05) 100%);">
+                    <span class="dial-label" id="turbo-label"><i class="fa-solid fa-gauge-high"></i></span>
+                </div>
+                <div class="perf-texts">
+                    <span class="perf-title" id="pct-turbo-txt">Turbo Engine</span>
+                    <div class="perf-status" id="pct-turbo-sub">OFFLINE</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="performance-grid" style="margin-top: -2px;">
+            <!-- Cool CPU mode -->
+            <div class="opt-card" id="cooling-card" onclick="toggleCooling()">
+                <i class="fa-solid fa-snowflake opt-icon"></i>
+                <span class="opt-title">Cooling Engine</span>
+            </div>
+            <div class="opt-card" id="cleaner-card" onclick="cleanStorage()">
+                <i class="fa-solid fa-dumpster-fire opt-icon"></i>
+                <span class="opt-title">Trash Purge</span>
+            </div>
+            <div class="opt-card" id="power-perf-card" onclick="togglePerformanceMode()">
+                <i class="fa-solid fa-bolt opt-icon"></i>
+                <span class="opt-title">Hyper Mode</span>
+            </div>
+        </div>
+
+        <!-- ADVANCED ARCHITECTURE FEATURES -->
+        <div class="section-header">Elite Advanced Vault</div>
+        <div class="adv-features-list">
+            <div class="adv-row" onclick="triggerVault('Security Sandbox Verified')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-shield-halved adv-icon"></i>
+                    <span class="adv-title">Security Center</span>
+                </div>
+                <div class="adv-right">Ultra Lock <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="adv-row" onclick="triggerVault('Biometric Private Space Initiated')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-fingerprint adv-icon"></i>
+                    <span class="adv-title">Private Space</span>
+                </div>
+                <div class="adv-right">Biometric <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="adv-row" onclick="triggerVault('Cloaking Hidden Repos Active')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-eye-slash adv-icon"></i>
+                    <span class="adv-title">Hidden Apps</span>
+                </div>
+                <div class="adv-right">Invisible <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="adv-row" onclick="triggerVault('Holographic Recorder Armed')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-video adv-icon font-display"></i>
+                    <span class="adv-title">Screen Recorder</span>
+                </div>
+                <div class="adv-right">4k 120FPS <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="adv-row" onclick="triggerVault('Secured Sandbox Clipboard Loaded')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-paste adv-icon"></i>
+                    <span class="adv-title">Secure Clipboard</span>
+                </div>
+                <div class="adv-right">Encrypted <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+            <div class="adv-row" onclick="triggerVault('LM Core Cyber Assistant Decrypted')">
+                <div class="adv-left">
+                    <i class="fa-solid fa-brain adv-icon"></i>
+                    <span class="adv-title">AI Assistant</span>
+                </div>
+                <div class="adv-right">Active <i class="fa-solid fa-chevron-right"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN SOUND & SENSORY SCRIPT -->
+    <script>
+        // Web Audio Synth for sensory recoil clicks
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playRecoilSound(type = 'click') {
+            try {
+                if(audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.08);
+                } else if (type === 'heavy') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.25);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.25);
+                } else if (type === 'boost') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.4);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                }
+            } catch (e) {
+                console.log("Audio contextual block");
+            }
+        }
+
+        // Trigger Android/Web tactile vibration
+        function triggerHaptic(ms=15) {
+            if (navigator.vibrate) {
+                navigator.vibrate(ms);
+            }
+        }
+
+        // Screen Shake / Vibration trigger
+        function triggerScreenVibration() {
+            document.body.classList.add('vibrate');
+            setTimeout(() => {
+                document.body.classList.remove('vibrate');
+            }, 300);
+        }
+
+        // Particle Burst Effect on tap
+        function createParticleBurst(e) {
+            const x = e.clientX || (e.touches && e.touches[0].clientX);
+            const y = e.clientY || (e.touches && e.touches[0].clientY);
+            if (!x || !y) return;
+
+            for(let i=0; i<8; i++) {
+                const p = document.createElement('div');
+                p.className = 'emitter-burst';
+                p.style.left = (x - 5) + 'px';
+                p.style.top = (y - 5) + 'px';
+                p.style.setProperty('--edge-glow', document.documentElement.style.getPropertyValue('--edge-glow') || '#ff003c');
+                document.body.appendChild(p);
+
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 20 + Math.random() * 40;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+
+                p.animate([
+                    { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
+                ], {
+                    duration: 350 + Math.random() * 200,
+                    easing: 'ease-out'
+                }).onfinish = () => p.remove();
+            }
+        }
+
+        // Listen for all body clicks to add interactive effects
+        document.body.addEventListener('pointerdown', (e) => {
+            playRecoilSound('click');
+            triggerHaptic(12);
+            createParticleBurst(e);
+        });
+
+        // Elite Toast Notification Loader
+        function showEliteToast(text, duration = 2000) {
+            const toast = document.getElementById('toast-message');
+            const toastText = document.getElementById('toast-text');
+            toastText.textContent = text.toUpperCase();
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
+
+        // Clock display tick
+        function tickClock() {
+            const now = new Date();
+            let hh = String(now.getHours()).padStart(2, '0');
+            let mm = String(now.getMinutes()).padStart(2, '0');
+            let ss = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock-txt').textContent = `${hh}:${mm}:${ss}`;
+
+            // Sync date once hourly (or simple calculation)
+            const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('date-txt').textContent = now.toLocaleDateString('en-US', options).toUpperCase();
+        }
+        setInterval(tickClock, 1000);
+        tickClock();
+
+        // Ambient Fog Particle Canvas
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let bgParticles = [];
+
+        function resizeBg() {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeBg);
+        resizeBg();
+
+        class AtmosphericParticle {
+            constructor() {
+                this.reset();
+            }
+            reset() {
+                this.x = Math.random() * bgCanvas.width;
+                this.y = bgCanvas.height + Math.random() * 40;
+                this.size = Math.random() * 2.5 + 0.5;
+                this.speedY = Math.random() * 0.4 + 0.15;
+                this.alpha = Math.random() * 0.4 + 0.1;
+                this.drift = Math.sin(Math.random() * 100) * 0.2;
+            }
+            update() {
+                this.y -= this.speedY;
+                this.x += this.drift;
+                if (this.y < -10) {
+                    this.reset();
+                }
+            }
+            draw() {
+                bgCtx.fillStyle = `rgba(255, 0, 60, ${this.alpha})`;
+                bgCtx.shadowBlur = 6;
+                bgCtx.shadowColor = '#ff003c';
+                bgCtx.beginPath();
+                bgCtx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+                bgCtx.fill();
+            }
+        }
+
+        for(let i=0; i<45; i++) {
+            bgParticles.push(new AtmosphericParticle());
+        }
+
+        function drawAtmosphere() {
+            bgCtx.clearRect(0,0, bgCanvas.width, bgCanvas.height);
+            // Draw a subtle dark crimson backdrop fog aura
+            const grad = bgCtx.createRadialGradient(bgCanvas.width/2, bgCanvas.height/2, 10, bgCanvas.width/2, bgCanvas.height/2, bgCanvas.width);
+            grad.addColorStop(0, '#100003');
+            grad.addColorStop(1, '#050505');
+            bgCtx.fillStyle = grad;
+            bgCtx.fillRect(0,0, bgCanvas.width, bgCanvas.height);
+
+            bgParticles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(drawAtmosphere);
+        }
+        drawAtmosphere();
+
+        // Interactive Brightness Slider
+        const brightnessSlider = document.getElementById('brightness-slider');
+        const brightnessFill = document.getElementById('brightness-fill');
+        const brightnessText = document.getElementById('brightness-text');
+        const percentageIndicator = document.getElementById('percentage-indicator');
+
+        function setBrightness(e) {
+            const rect = brightnessSlider.getBoundingClientRect();
+            let clientX = e.clientX;
+            if (e.touches && e.touches[0]) {
+                clientX = e.touches[0].clientX;
+            }
+            let val = ((clientX - rect.left) / rect.width) * 100;
+            val = Math.max(10, Math.min(100, Math.round(val)));
+            brightnessFill.style.width = val + '%';
+            brightnessText.textContent = val + '%';
+            percentageIndicator.textContent = val;
+
+            // Adjust actual Three.js scene ambient intensity!
+            if (mainSceneAmbientLight) {
+                mainSceneAmbientLight.intensity = (val / 100) * 0.8 + 0.2;
+            }
+            if (showcasePointLight) {
+                showcasePointLight.intensity = (val / 100) * 2.0 + 0.5;
+            }
+        }
+
+        brightnessSlider.addEventListener('pointerdown', (e) => {
+            setBrightness(e);
+            const moveHandler = (evt) => setBrightness(evt);
+            const upHandler = () => {
+                document.removeEventListener('pointermove', moveHandler);
+                document.removeEventListener('pointerup', upHandler);
+            };
+            document.addEventListener('pointermove', moveHandler);
+            document.addEventListener('pointerup', upHandler);
+        });
+
+        // Edge Glow Personalizer
+        function setEdgeGlow(color, element) {
+            document.documentElement.style.setProperty('--edge-glow', color);
+            document.documentElement.style.setProperty('--neon-red', color);
+            document.documentElement.style.setProperty('--neon-glow', `0 0 15px ${color}99`);
+            document.documentElement.style.setProperty('--neon-glow-strong', `0 0 25px ${color}, 0 0 45px ${color}66`);
+
+            // Update companion highlights
+            document.querySelectorAll('.edge-opt-container .edge-btn').forEach(btn => btn.classList.remove('active'));
+            if(element) element.classList.add('active');
+
+            // Set color state of showcase model materials
+            if (activeShowcaseMesh && activeShowcaseMesh.material) {
+                if (Array.isArray(activeShowcaseMesh.material)) {
+                    activeShowcaseMesh.material.forEach(m => {
+                        if (m.emissive) m.emissive.setHex(parseInt(color.replace('#','0x')));
+                    });
+                } else {
+                    if (activeShowcaseMesh.material.emissive) activeShowcaseMesh.material.emissive.setHex(parseInt(color.replace('#','0x')));
+                }
+            }
+
+            showEliteToast(`Edge Aura Refit: ${color}`);
+        }
+
+        function setEdgePulse(speed, element) {
+            document.body.className = "edge-lighting-pulse";
+            if (speed === 'slow') {
+                document.body.classList.add('custom-edge-pulse-slow');
+            } else if (speed === 'fast') {
+                document.body.classList.add('custom-edge-pulse-fast');
+            }
+            // Update UI buttons
+            element.parentElement.querySelectorAll('.edge-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            showEliteToast(`Pulse Modulation: ${speed}`);
+        }
+
+        // Active States for Widgets
+        const widgetStates = {
+            'wi-fi': false,
+            'bluetooth': false,
+            'mobile-data': false,
+            'hotspot': false,
+            'flashlight': false,
+            'battery-saver': false,
+            'location': false,
+            'dark-mode': false,
+            'vpn': false,
+            'nfc': false,
+            'airplane': false,
+            'screencast': false,
+            'mute': false,
+            'cooling': false,
+            'performance': false
+        };
+
+        function toggleOption(id) {
+            widgetStates[id] = !widgetStates[id];
+            const card = document.getElementById(id + '-card');
+            const label = document.getElementById(id + '-status-label');
+
+            if (widgetStates[id]) {
+                if (card) card.classList.add('active');
+                if (label) label.textContent = 'ONLINE';
+                showEliteToast(`${id.replace('-',' ')} grid armed`);
+                playRecoilSound('heavy');
+                triggerScreenVibration();
+            } else {
+                if (card) card.classList.remove('active');
+                if (label) label.textContent = 'OFFLINE';
+                showEliteToast(`${id.replace('-',' ')} grid disarmed`);
+            }
+
+            // Sync indicators with top connectivity bar
+            if (id === 'wi-fi') {
+                document.getElementById('top-wifi-icon').style.color = widgetStates[id] ? 'var(--neon-red)' : 'rgba(255,255,255,0.4)';
+            } else if (id === 'bluetooth') {
+                document.getElementById('top-bt-icon').style.color = widgetStates[id] ? 'var(--neon-red)' : 'rgba(255,255,255,0.4)';
+            }
+        }
+
+        // Performance Booster dials click
+        function boostRam() {
+            showEliteToast("Purging Background Services...");
+            playRecoilSound('boost');
+            triggerHaptic(50);
+            triggerScreenVibration();
+
+            let percent = 64;
+            const ramPercent = document.getElementById('ram-percent');
+            const ramDial = document.getElementById('ram-dial');
+
+            const interval = setInterval(() => {
+                percent -= 2;
+                ramPercent.textContent = percent + '%';
+                ramDial.style.background = `conic-gradient(var(--neon-red) 0%, var(--neon-red) ${percent}%, rgba(255,255,255,0.05) ${percent}%, rgba(255,255,255,0.05) 100%)`;
+                if(percent <= 32) {
+                    clearInterval(interval);
+                    showEliteToast("RAM Booster: Deep Clean 3.2GB Reclaimed!");
+                }
+            }, 30);
+        }
+
+        let turboActive = false;
+        function toggleTurbo() {
+            turboActive = !turboActive;
+            const turboLabel = document.getElementById('turbo-label');
+            const turboDial = document.getElementById('turbo-dial');
+            const turboTxt = document.getElementById('pct-turbo-txt');
+            const turboSub = document.getElementById('pct-turbo-sub');
+
+            if(turboActive) {
+                turboDial.style.background = `conic-gradient(var(--neon-red) 0%, var(--neon-red) 100%)`;
+                turboTxt.style.color = 'var(--neon-red)';
+                turboSub.textContent = 'MAX OVERDRIVE';
+                turboSub.style.color = 'var(--neon-red)';
+                showEliteToast("TURBO BOOSTER: OVERCLOCK INITIATED", 2500);
+                playRecoilSound('heavy');
+                triggerScreenVibration();
+            } else {
+                turboDial.style.background = `conic-gradient(rgba(255,255,255,0.05) 100%)`;
+                turboTxt.style.color = '#fff';
+                turboSub.textContent = 'OFFLINE';
+                turboSub.style.color = 'rgba(255,255,255,0.5)';
+                showEliteToast("Turbo Boost Suspended");
+            }
+        }
+
+        function toggleCooling() {
+            widgetStates['cooling'] = !widgetStates['cooling'];
+            const card = document.getElementById('cooling-card');
+            if (widgetStates['cooling']) {
+                card.classList.add('active');
+                showEliteToast("Liquid helium pump activated. Temperature decreasing.");
+            } else {
+                card.classList.remove('active');
+                showEliteToast("Cooling pump offline.");
+            }
+        }
+
+        function cleanStorage() {
+            showEliteToast("Scanning System Registry...");
+            setTimeout(() => {
+                showEliteToast("Purged 4.81 GB obsolete telemetry cache.");
+                triggerHaptic(60);
+            }, 1000);
+        }
+
+        function togglePerformanceMode() {
+            widgetStates['performance'] = !widgetStates['performance'];
+            const card = document.getElementById('power-perf-card');
+            if (widgetStates['performance']) {
+                card.classList.add('active');
+                showEliteToast("Performance mode MAX configuration loaded.");
+            } else {
+                card.classList.remove('active');
+                showEliteToast("Performance dialed back to balanced profile.");
+            }
+        }
+
+        // Vault item dialog trigger
+        function triggerVault(label) {
+            showEliteToast(label + " secured");
+            triggerHaptic(40);
+        }
+
+        // Three.js Interactive 3D Setup for Main Showcase and Small Cards
+        let showcaseScene, showcaseCamera, showcaseRenderer, showcaseControls;
+        let mainSceneAmbientLight, showcasePointLight;
+        let currentShowcaseTheme = 'Dragon Head';
+        let activeShowcaseMesh = null;
+
+        // Small scenes array for active updates
+        const smallScenes = [];
+
+        function initShowcase3D() {
+            const container = document.getElementById('showcase-container');
+            const canvas = document.getElementById('showcase-canvas');
+
+            showcaseScene = new THREE.Scene();
+            showcaseScene.fog = new THREE.FogExp2(0x050505, 0.15);
+
+            showcaseCamera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
+            showcaseCamera.position.set(0, 1.2, 3.2);
+
+            showcaseRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            showcaseRenderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            showcaseRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+            showcaseControls = new THREE.OrbitControls(showcaseCamera, showcaseRenderer.domElement);
+            showcaseControls.enableDamping = true;
+            showcaseControls.dampingFactor = 0.05;
+            showcaseControls.enableZoom = false; // keep it purely horizontal/vertical swipe
+            showcaseControls.maxPolarAngle = Math.PI / 1.8;
+
+            mainSceneAmbientLight = new THREE.AmbientLight(0xff003c, 0.55);
+            showcaseScene.add(mainSceneAmbientLight);
+
+            showcasePointLight = new THREE.PointLight(0xffffff, 2.5, 10);
+            showcasePointLight.position.set(2, 3, 2);
+            showcaseScene.add(showcasePointLight);
+
+            // Adding neon grid below model
+            const gridHelper = new THREE.GridHelper(10, 20, 0xff003c, 0x110002);
+            gridHelper.position.y = -0.5;
+            showcaseScene.add(gridHelper);
+
+            // Set up initial theme mesh
+            loadShowcaseMesh(currentShowcaseTheme);
+        }
+
+        // Load procedural meshes based on theme choice
+        function loadShowcaseMesh(themeName) {
+            if (activeShowcaseMesh) {
+                showcaseScene.remove(activeShowcaseMesh);
+            }
+
+            const themeGroup = new THREE.Group();
+            const neonMat = new THREE.MeshStandardMaterial({
+                color: 0x050505,
+                emissive: 0xff003c,
+                roughness: 0.2,
+                metalness: 0.9
+            });
+            const steelMat = new THREE.MeshStandardMaterial({
+                color: 0x222222,
+                roughness: 0.1,
+                metalness: 1.0
+            });
+
+            if (themeName === 'Dragon Head') {
+                // Procedural Low Poly Dragon Snout & Scaly head
+                const snout = new THREE.Mesh(new THREE.ConeGeometry(0.4, 1.0, 5), neonMat);
+                snout.rotation.x = Math.PI / 2;
+                themeGroup.add(snout);
+
+                const horns = new THREE.Group();
+                for (let i = -1; i <= 1; i += 2) {
+                    const horn = new THREE.Mesh(new THREE.ConeGeometry(0.1, 0.6, 4), steelMat);
+                    horn.position.set(i * 0.25, 0.4, -0.3);
+                    horn.rotation.z = -i * 0.3;
+                    horns.add(horn);
+                }
+                themeGroup.add(horns);
+
+                const collar = new THREE.Mesh(new THREE.TorusGeometry(0.4, 0.08, 6, 16), steelMat);
+                collar.position.z = -0.4;
+                themeGroup.add(collar);
+
+            } else if (themeName === 'Raven') {
+                // Procedural Raven skull/beak
+                const skull = new THREE.Mesh(new THREE.SphereGeometry(0.35, 8, 8), steelMat);
+                skull.scale.set(1, 1, 1.3);
+                themeGroup.add(skull);
+
+                const beak = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.8, 4), neonMat);
+                beak.position.z = 0.6;
+                beak.rotation.x = Math.PI / 2;
+                themeGroup.add(beak);
+
+            } else if (themeName === 'Wolf') {
+                // Geometric sharp wolf head
+                const crown = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.4, 0.5), steelMat);
+                themeGroup.add(crown);
+
+                const jaws = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.6, 4), neonMat);
+                jaws.position.set(0, -0.1, 0.45);
+                jaws.rotation.x = Math.PI / 2;
+                themeGroup.add(jaws);
+
+                const earL = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 3), steelMat);
+                earL.position.set(-0.2, 0.3, -0.1);
+                themeGroup.add(earL);
+
+                const earR = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.35, 3), steelMat);
+                earR.position.set(0.2, 0.3, -0.1);
+                themeGroup.add(earR);
+
+            } else if (themeName === 'Cobra') {
+                // Radiant metallic snake coil
+                const spine = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.08, 8, 30), steelMat);
+                themeGroup.add(spine);
+
+                const hood = new THREE.Mesh(new THREE.ConeGeometry(0.3, 0.7, 5), neonMat);
+                hood.position.set(0, 0.4, 0.1);
+                hood.rotation.x = -0.2;
+                themeGroup.add(hood);
+
+            } else if (themeName === 'Scorpion') {
+                // Mechanical claw and segments
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.15, 0.6), steelMat);
+                themeGroup.add(body);
+
+                const tail = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.06, 6, 12, Math.PI), neonMat);
+                tail.position.set(0, 0.25, -0.3);
+                tail.rotation.y = Math.PI / 2;
+                themeGroup.add(tail);
+
+            } else if (themeName === 'Phantom Mask') {
+                // Ninja futuristic display shield facial contours
+                const face = new THREE.Mesh(new THREE.SphereGeometry(0.42, 6, 12), steelMat);
+                face.scale.set(1.1, 1.4, 0.6);
+                themeGroup.add(face);
+
+                const goggle = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.15, 0.25), neonMat);
+                goggle.position.set(0, 0.2, 0.3);
+                themeGroup.add(goggle);
+
+            } else if (themeName === 'Dark Crown') {
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.38, 0.08, 6, 24), steelMat);
+                ring.rotation.x = Math.PI / 2;
+                themeGroup.add(ring);
+
+                for (let i = 0; i < 6; i++) {
+                    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.38, 4), neonMat);
+                    const angle = (i / 6) * Math.PI * 2;
+                    spike.position.set(Math.cos(angle) * 0.38, 0.2, Math.sin(angle) * 0.38);
+                    themeGroup.add(spike);
+                }
+
+            } else if (themeName === 'Fire Crystal' || themeName === 'Mystic Crystal' || themeName === 'Ice Core') {
+                const core = new THREE.Group();
+                const count = themeName === 'Mystic Crystal' ? 5 : 3;
+                for (let i = 0; i < count; i++) {
+                    const crystalType = new THREE.Mesh(new THREE.OctahedronGeometry(0.3 + (i * 0.05)), neonMat);
+                    crystalType.position.set((Math.random()-0.5)*0.3, (Math.random()-0.5)*0.4, (Math.random()-0.5)*0.3);
+                    crystalType.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, 0);
+                    core.add(crystalType);
+                }
+                themeGroup.add(core);
+
+            } else if (themeName === 'Lava Orb' || themeName === 'Energy Sphere' || themeName === 'Shadow Portal' || themeName === 'Plasma Reactor') {
+                const inner = new THREE.Mesh(new THREE.SphereGeometry(0.32, 16, 16), neonMat);
+                themeGroup.add(inner);
+
+                const ringOuter = new THREE.Mesh(new THREE.TorusGeometry(0.52, 0.04, 4, 30), steelMat);
+                themeGroup.add(ringOuter);
+
+                const ringSpin = new THREE.Mesh(new THREE.TorusGeometry(0.60, 0.02, 3, 20), neonMat);
+                ringSpin.rotation.x = Math.PI / 3;
+                themeGroup.add(ringSpin);
+
+            } else if (themeName === 'Mechanical Gear') {
+                const gear = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.15, 12), steelMat);
+                gear.rotation.x = Math.PI / 2;
+                themeGroup.add(gear);
+
+                const coreHole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.2, 8), neonMat);
+                coreHole.rotation.x = Math.PI / 2;
+                themeGroup.add(coreHole);
+
+            } else if (themeName === 'Dark Moon') {
+                const moon = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), steelMat);
+                themeGroup.add(moon);
+
+                const crescent = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.05, 4, 20, Math.PI / 1.1), neonMat);
+                crescent.rotation.y = Math.PI / 4;
+                themeGroup.add(crescent);
+
+            } else if (themeName === 'Cyber Eye' || themeName === 'Ancient Relic' || themeName === 'Titan Helmet' || themeName === 'Cyber Brain') {
+                const baseOrb = new THREE.Mesh(new THREE.DodecahedronGeometry(0.45), steelMat);
+                themeGroup.add(baseOrb);
+
+                const scannerLine = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.03, 4, 24), neonMat);
+                scannerLine.rotation.x = Math.PI / 2;
+                themeGroup.add(scannerLine);
+            }
+
+            activeShowcaseMesh = themeGroup;
+            showcaseScene.add(activeShowcaseMesh);
+        }
+
+        function selectTheme(name) {
+            currentShowcaseTheme = name;
+            loadShowcaseMesh(name);
+            document.getElementById('showcase-descriptor').textContent = `ELITE MODEL: ${name}`;
+
+            // Sync grid styles select
+            document.querySelectorAll('.themes-wrapper .theme-item').forEach(it => {
+                if (it.textContent.toUpperCase() === name.toUpperCase() || (name === 'Mech Gear' && it.textContent === 'Mech Gear') || (name === 'Plasma Rx' && it.textContent === 'Plasma Rx')) {
+                    it.classList.add('active');
+                } else {
+                    it.classList.remove('active');
+                }
+            });
+
+            showEliteToast(`${name} holo theme matrix mounted`);
+        }
+
+        // Initialize 3D cards preview individually
+        const widgetConfigs = [
+            { id: 'wifi', build: (g) => {
+                // Giant robotic multi-legged spike/spider shape
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.1, 0.22), new THREE.MeshStandardMaterial({color: 0x111, metalness: 1}));
+                g.add(body);
+                // 3 concentric circular grids mimicking the Web
+                for(let i=1; i<=3; i++) {
+                    const ring = new THREE.Mesh(new THREE.TorusGeometry(i*0.22, 0.015, 4, 16), new THREE.MeshBasicMaterial({color: 0xff003c, wireframe: true}));
+                    ring.rotation.x = Math.PI / 2;
+                    g.add(ring);
+                }
+            }},
+            { id: 'bluetooth', build: (g) => {
+                // Crystal geometric skull with glowing spheres inside
+                const skull = new THREE.Mesh(new THREE.IcosahedronGeometry(0.28, 1), new THREE.MeshStandardMaterial({color: 0x333, metalness: 0.9, roughness: 0.2}));
+                g.add(skull);
+                // Glowing eyes
+                const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06, 6, 6), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                eyeL.position.set(-0.1, 0.08, 0.22);
+                const eyeR = eyeL.clone();
+                eyeR.position.x = 0.1;
+                g.add(eyeL);
+                g.add(eyeR);
+            }},
+            { id: 'mobile-data', build: (g) => {
+                // Rotating Energy Reactor Core
+                const reactor = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.45, 8), new THREE.MeshStandardMaterial({color: 0x222, metalness: 1}));
+                g.add(reactor);
+                // Rotating rings
+                const upperRing = new THREE.Mesh(new THREE.TorusGeometry(0.26, 0.03, 4, 12), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                upperRing.position.y = 0.15;
+                g.add(upperRing);
+                const lowerRing = upperRing.clone();
+                lowerRing.position.y = -0.15;
+                g.add(lowerRing);
+            }},
+            { id: 'hotspot', build: (g) => {
+                // Swirling vortex energy portal inside ring
+                const gate = new THREE.Mesh(new THREE.TorusGeometry(0.30, 0.04, 6, 24), new THREE.MeshStandardMaterial({color: 0x050505, metalness: 1}));
+                g.add(gate);
+                // Glowing central node
+                const node = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), new THREE.MeshBasicMaterial({color: 0xff003c, wireframe: true}));
+                g.add(node);
+            }},
+            { id: 'flashlight', build: (g) => {
+                // Solid Plasma light beam generator
+                const torch = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.15, 0.38, 6), new THREE.MeshStandardMaterial({color: 0x444, metalness: 0.8}));
+                torch.rotation.x = Math.PI / 4;
+                g.add(torch);
+                // Floating point plasma
+                const beam = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.5, 5), new THREE.MeshBasicMaterial({color: 0xff003c, transparent: true, opacity: 0.65}));
+                beam.position.set(0, 0.22, 0.22);
+                beam.rotation.x = Math.PI / 4;
+                g.add(beam);
+            }},
+            { id: 'battery-saver', build: (g) => {
+                // Rotating power crystal clusters
+                for (let i = 0; i < 3; i++) {
+                    const prism = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.1, 0.38, 4), new THREE.MeshStandardMaterial({color: 0x111, metalness: 1, roughness: 0.1}));
+                    prism.position.set(Math.cos(i * 2) * 0.16, 0, Math.sin(i * 2) * 0.16);
+                    g.add(prism);
+                }
+            }},
+            { id: 'location', build: (g) => {
+                // Glowing tech eye scanning lens
+                const frame = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.03, 4, 16), new THREE.MeshStandardMaterial({color: 0x222, metalness: 1}));
+                g.add(frame);
+                const reticle = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.02, 0.02), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                g.add(reticle);
+            }},
+            { id: 'dark-mode', build: (g) => {
+                // Eclipse Orb: rotating dark sphere eclipsing a bright inner neon core
+                const sun = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 12), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                g.add(sun);
+                const darkMoon = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), new THREE.MeshStandardMaterial({color: 0x111, metalness: 1}));
+                darkMoon.position.set(0.18, 0, 0.1);
+                g.add(darkMoon);
+            }},
+            { id: 'vpn', build: (g) => {
+                // Curved futuristic shield core
+                const shield = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.32, 3), new THREE.MeshStandardMaterial({color: 0x222, metalness: 0.9}));
+                shield.rotation.x = Math.PI;
+                g.add(shield);
+                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.34, 0.02, 3, 16), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                ring.rotation.x = Math.PI / 2;
+                g.add(ring);
+            }},
+            { id: 'nfc', build: (g) => {
+                // Circular metallic coin with custom glowing visual
+                const chip = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.28, 0.05, 12), new THREE.MeshStandardMaterial({color: 0x1a1a1a, metalness: 1, roughness: 0.2}));
+                chip.rotation.x = Math.PI / 2;
+                g.add(chip);
+                const neonIn = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 4, 16), new THREE.MeshBasicMaterial({color: 0xff003c}));
+                neonIn.position.z = 0.03;
+                g.add(neonIn);
+            }}
+        ];
+
+        function initWidget3D(cfg) {
+            const container = document.getElementById(cfg.id + '-container');
+            if(!container) return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(40, container.clientWidth / container.clientHeight, 0.1, 10);
+            camera.position.set(0, 0, 1.3);
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+            container.appendChild(renderer.domElement);
+
+            const ambient = new THREE.AmbientLight(0xff003c, 0.4);
+            scene.add(ambient);
+
+            const point = new THREE.PointLight(0xffffff, 1.5, 4);
+            point.position.set(1, 2, 1);
+            scene.add(point);
+
+            const group = new THREE.Group();
+            cfg.build(group);
+            scene.add(group);
+
+            smallScenes.push({
+                id: cfg.id,
+                scene: scene,
+                renderer: renderer,
+                camera: camera,
+                group: group
+            });
+        }
+
+        // Render tick loop
+        let lastTime = 0;
+        function renderLoop(time) {
+            const delta = (time - lastTime) * 0.001;
+            lastTime = time;
+
+            // Tick showcase model
+            if (showcaseControls) showcaseControls.update();
+            if (activeShowcaseMesh) {
+                activeShowcaseMesh.rotation.y += 0.008;
+                // Idle gentle bounce floating animation
+                activeShowcaseMesh.position.y = Math.sin(time * 0.0015) * 0.08;
+            }
+            if (showcaseRenderer && showcaseScene && showcaseCamera) {
+                showcaseRenderer.render(showcaseScene, showcaseCamera);
+            }
+
+            // Tick small cards
+            smallScenes.forEach(sc => {
+                // If the dynamic widget is toggled ON, spin faster & pulse color intensity!
+                const isSwitchedOn = widgetStates[sc.id] || widgetStates[sc.id.replace('wi-fi','wi-fi').replace('bluetooth','bluetooth')]; // basic match check
+                const speed = isSwitchedOn ? 0.04 : 0.01;
+                sc.group.rotation.y += speed;
+                sc.group.rotation.x = Math.sin(time * 0.001) * 0.15;
+
+                // Render small scene
+                sc.renderer.render(sc.scene, sc.camera);
+            });
+
+            requestAnimationFrame(renderLoop);
+        }
+
+        // Run after loading window
+        window.addEventListener('load', () => {
+            initShowcase3D();
+            widgetConfigs.forEach(cfg => initWidget3D(cfg));
+            requestAnimationFrame(renderLoop);
+
+            // Trigger custom ambient initial states
+            setTimeout(() => {
+                showEliteToast("LM ELITE: NEURAL SYSTEM ONLINE", 3000);
+            }, 800);
+        });
+
+        // Offline Fallback listener
+        window.addEventListener('offline', () => {
+            showEliteToast("INTEGRITY COMPROMISED: offline mode active", 4000);
+        });
+        window.addEventListener('online', () => {
+            showEliteToast("TECTONIC SECURE GRID re-synchronized", 3000);
+        });
+    </script>
+</body>
+</html>

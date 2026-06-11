@@ -1,0 +1,6 @@
+{
+  "name": "LM Elite",
+  "description": "Ultra premium dark cyberpunk control center dashboard with real-time 3D interactive holographic widgets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
